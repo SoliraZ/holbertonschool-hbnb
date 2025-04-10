@@ -4,3 +4,11 @@ venv/
 test.py
 instance/
 *.db
+node_modules/
+dist/
+build/
+.env
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
