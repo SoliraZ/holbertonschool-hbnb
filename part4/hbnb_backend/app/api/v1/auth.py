@@ -1,6 +1,7 @@
 from flask_restx import Namespace, Resource, fields
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import request
 from app.services import facade
 from app.models.user import User
 
@@ -27,6 +28,10 @@ class Login(Resource):
             'is_admin': user.is_admin
             })
         return {'access_token': access_token}, 200
+        
+    def options(self):
+        """Handle OPTIONS request for CORS preflight"""
+        return '', 200
 
 
 @api.route('/protected')
@@ -37,3 +42,7 @@ class ProtectedResource(Resource):
         """A protected endpoint that requires a valid JWT token"""
         current_user = get_jwt_identity()
         return {'message': f'Hello, user {current_user["id"]}'}, 200
+        
+    def options(self):
+        """Handle OPTIONS request for CORS preflight"""
+        return '', 200

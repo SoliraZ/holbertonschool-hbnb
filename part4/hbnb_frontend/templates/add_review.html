@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Review</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body class="add-review-page">
+    <header>
+        <div class="brand">
+            <a href="../index.html"><img class="logo" src="../images/logo.png" alt="HBnB"></a>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="title-reviewing">Reviewing</h1>
+        <form id="review-form" class="add-review-card-page">
+            <h2>Add a Review</h2>
+            <label for="review">Your Review:</label>
+            <textarea id="review" name="review" required placeholder="Describe your experience"></textarea>
+
+            <label for="rating">Rating:</label>
+            <div class="rating-container">
+                <input type="radio" id="rate5" name="rating" value="5" required>
+                <label for="rate5" title="5 stars">&#9733;</label>
+
+                <input type="radio" id="rate4" name="rating" value="4">
+                <label for="rate4" title="4 stars">&#9733;</label>
+
+                <input type="radio" id="rate3" name="rating" value="3">
+                <label for="rate3" title="3 stars">&#9733;</label>
+
+                <input type="radio" id="rate2" name="rating" value="2">
+                <label for="rate2" title="2 stars">&#9733;</label>
+
+                <input type="radio" id="rate1" name="rating" value="1">
+                <label for="rate1" title="1 star">&#9733;</label>
+            </div>
+
+            <button type="submit">Submit Review</button>
+        </form>
+    </main>
+
+    <footer>
+        <div class="footer-details">
+            <p>&copy; 2025 HBnB. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../js/scripts.js"></script>
+</body>
+
+</html>

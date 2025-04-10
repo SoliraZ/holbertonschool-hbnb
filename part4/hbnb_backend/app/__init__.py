@@ -3,6 +3,7 @@ from flask_restx import Api
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 
 db = SQLAlchemy()
@@ -13,6 +14,18 @@ jwt = JWTManager()
 def create_app(config_class="config.DevelopmentConfig"):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    
+    # Configure CORS with more permissive settings
+    CORS(app, 
+         resources={r"/api/*": {
+             "origins": ["http://localhost:5501", "http://127.0.0.1:5501", "http://localhost:3000", "http://127.0.0.1:3000"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True,
+             "expose_headers": ["Content-Type", "Authorization"],
+             "max_age": 3600
+         }})
+    
     authorizations = {
         'token': {
             'type': 'apiKey',

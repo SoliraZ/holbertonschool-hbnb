@@ -1,6 +1,7 @@
 from flask_restx import Namespace, Resource, fields
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services import facade
+from flask import request
 
 api = Namespace('places', description='Place operations')
 
@@ -29,24 +30,31 @@ class PlaceList(Resource):
         data = api.payload
         data['owner_id'] = current_user['id']
         try:
-            new_place = facade.create_place(data)
-            return {
-                'id': new_place.id,
-                'message': 'Place successfully created'
-            }, 201
+            place = facade.create_place(data)
+            return place.to_dict(), 201
         except ValueError as e:
-            return {'error': str(e)}, 400
-        except TypeError as e:
             return {'error': str(e)}, 400
 
     @api.response(200, 'List of places retrieved successfully')
+    @api.doc(security="token")
     def get(self):
         """Retrieve a list of all places"""
         try:
+            # Check if Authorization header is present
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                # Token is present, but we don't require it for this endpoint
+                # We can use it for additional functionality if needed
+                pass
+                
             places = facade.get_all_places()
             return [place.to_dict() for place in places], 200
         except ValueError as e:
             return {'error': str(e)}, 400
+
+    def options(self):
+        """Handle OPTIONS request for CORS preflight"""
+        return '', 200
 
 
 @api.route('/<place_id>')
@@ -58,21 +66,9 @@ class PlaceResource(Resource):
         """Get place details by ID"""
         try:
             place_data = facade.get_place(place_id)
-            return {
-                'id': place_data.id,
-                'title': place_data.title,
-                'description': place_data.description,
-                'price': place_data.price,
-                'latitude': place_data.latitude,
-                'longitude': place_data.longitude,
-                'owner_id': place_data.owner_id,
-                'amenities': [{
-                    'id': amenity.id,
-                    'name': amenity.name
-                    } for amenity in place_data.amenities],
-                    }, 200
+            return place_data, 200
         except ValueError as e:
-            return {'error': str(e)}, 400
+            return {'error': str(e)}, 404
 
     @api.expect(place_model)
     @api.response(200, 'Place updated successfully')
@@ -81,28 +77,35 @@ class PlaceResource(Resource):
     @api.doc(security="token")
     @jwt_required()
     def put(self, place_id):
-        """Update a place's information"""
+        """Update a place"""
         current_user = get_jwt_identity()
-        place = facade.get_place(place_id)
-        if not place:
-            return {'message': 'Invalid input data'}, 400
-        if current_user['id'] != place.owner_id:
-            return {'error': 'Unauthorized action'}, 403
+        data = api.payload
         try:
-            updated_data = api.payload
-            updated_data['owner_id'] = current_user['id']
-            updated_place = facade.update_place(place_id, updated_data)
-            if not updated_place:
-                return {'message': 'Place not found'}, 404
-
-            return {
-                    'id': updated_place.id,
-                    'message': 'Place successfully updated'
-                }, 200
+            place = facade.update_place(place_id, data, current_user['id'])
+            return place.to_dict(), 200
         except ValueError as e:
-            return {'error': str(e)}, 400
-        except KeyError as e:
-            return {'error': str(e)}, 400
+            return {'error': str(e)}, 404
+        except PermissionError as e:
+            return {'error': str(e)}, 403
+
+    @api.response(200, 'Place deleted successfully')
+    @api.response(404, 'Place not found')
+    @api.doc(security="token")
+    @jwt_required()
+    def delete(self, place_id):
+        """Delete a place"""
+        current_user = get_jwt_identity()
+        try:
+            facade.delete_place(place_id, current_user['id'])
+            return {'message': 'Place deleted successfully'}, 200
+        except ValueError as e:
+            return {'error': str(e)}, 404
+        except PermissionError as e:
+            return {'error': str(e)}, 403
+
+    def options(self):
+        """Handle OPTIONS request for CORS preflight"""
+        return '', 200
 
 
 @api.route('/<place_id>/amenities/<amenity_id>')
@@ -112,24 +115,15 @@ class PlaceAmenity(Resource):
     @api.doc(security='token')
     @jwt_required()
     def post(self, place_id, amenity_id):
+        """Add an amenity to a place"""
+        current_user = get_jwt_identity()
         try:
-            place = facade.get_place(place_id)
-            if not place:
-                return {'error': 'Place not found'}, 400
-
-            current_user = get_jwt_identity()
-            if current_user['id'] != place.owner_id:
-                return {'error': 'Unauthorized action'}, 403
-
-            amenity = facade.get_amenity(amenity_id)
-            if not amenity:
-                return {'error': 'Amenity not found'}, 400
-
-            facade.add_amenity_to_place(place_id, amenity_id)
-            return {'message': 'Amenity sucessfully added to place'}
-
+            facade.add_amenity_to_place(place_id, amenity_id, current_user['id'])
+            return {'message': 'Amenity added to place successfully'}, 201
         except ValueError as e:
             return {'error': str(e)}, 400
+        except PermissionError as e:
+            return {'error': str(e)}, 403
 
     @api.response(200, 'Amenity successfully removed from place.')
     @api.response(400, 'Invalid input data')
@@ -137,24 +131,16 @@ class PlaceAmenity(Resource):
     @api.doc(security='token')
     @jwt_required()
     def delete(self, place_id, amenity_id):
+        """Remove an amenity from a place"""
+        current_user = get_jwt_identity()
         try:
-            place = facade.get_place(place_id)
-            if not place:
-                return {'error': 'Place not found'}, 400
-
-            current_user = get_jwt_identity()
-            if current_user['id'] != place.owner_id:
-                return {'error': 'Unauthorized action'}, 403
-
-            amenity = facade.get_amenity(amenity_id)
-            if not amenity:
-                return {'error': 'Amenity not found'}, 400
-
-            if amenity_id not in [amen.id for amen in place.amenities]:
-                return {'error': 'Amenity not in this place.'}, 400
-
-            facade.delete_amenity_from_place(place_id, amenity_id)
-            return {'message': 'Amenity successfully removed from place'}, 200
-
+            facade.remove_amenity_from_place(place_id, amenity_id, current_user['id'])
+            return {'message': 'Amenity removed from place successfully'}, 200
         except ValueError as e:
             return {'error': str(e)}, 400
+        except PermissionError as e:
+            return {'error': str(e)}, 403
+
+    def options(self):
+        """Handle OPTIONS request for CORS preflight"""
+        return '', 200
