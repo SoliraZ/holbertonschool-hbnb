@@ -105,6 +105,7 @@ class Place(BaseModel):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "owner_id": self.owner_id,
+            "owner_name": f"{self.owner.first_name} {self.owner.last_name}" if self.owner else "Unknown Owner",
             "amenities": [{'id': amenity.id, 'name': amenity.name}
                           for amenity in self.amenities]
         }
