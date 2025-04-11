@@ -50,11 +50,13 @@ class Review(BaseModel):
         return value
 
     def to_dict(self):
-        '''Convert the Review object to a dictionary'''
+        """Convert the review to a dictionary"""
         return {
             'id': self.id,
-            'text': self._text,
-            'user_id': self._user_id,
-            'place_id': self._place_id,
-            'rating': self._rating
+            'user_id': self.user_id,
+            'place_id': self.place_id,
+            'rating': self.rating,
+            'text': self.text,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

@@ -103,9 +103,9 @@ class PlaceResource(Resource):
         except PermissionError as e:
             return {'error': str(e)}, 403
 
-    def options(self):
+    def options(self, place_id=None):
         """Handle OPTIONS request for CORS preflight"""
-        return '', 200
+        return {}, 200
 
 
 @api.route('/<place_id>/amenities/<amenity_id>')
@@ -144,3 +144,21 @@ class PlaceAmenity(Resource):
     def options(self):
         """Handle OPTIONS request for CORS preflight"""
         return '', 200
+
+
+@api.route('/<place_id>/reviews')
+class PlaceReviews(Resource):
+    @api.response(200, 'Reviews retrieved successfully')
+    @api.response(404, 'Place not found')
+    @jwt_required()
+    def get(self, place_id):
+        """Get all reviews for a place"""
+        try:
+            reviews = facade.get_reviews_by_place(place_id)
+            return [review.to_dict() for review in reviews], 200
+        except ValueError as e:
+            return {'error': str(e)}, 404
+
+    def options(self, place_id=None):
+        """Handle OPTIONS request for CORS preflight"""
+        return {}, 200
