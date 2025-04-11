@@ -284,6 +284,10 @@ function displayPlaces(places) {
         const placeElement = document.createElement('div');
         placeElement.className = 'place-card';
         placeElement.innerHTML = `
+            <div class="place-image-box">
+                <i class="fas fa-image"></i>
+                <p>Image not available</p>
+            </div>
             <h2>${place.title || 'No Title'}</h2>
             <p>Price: $${place.price || '0'} per night</p>
             <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
