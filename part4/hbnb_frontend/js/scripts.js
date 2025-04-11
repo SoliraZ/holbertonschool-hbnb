@@ -3,76 +3,15 @@
 */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const loginBtn = document.querySelector('.auth-button');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => {
-            window.location.assign('templates/login.html');
-        });
-    }
+    checkAuthentication();
 
-    const loginForm = document.getElementById('auth-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const credentials = new FormData(loginForm);
-            const userDetails = {
-                email: credentials.get('email'),
-                password: credentials.get('password')
-            };
-            console.log('User credentials:', userDetails);
-
-            try {
-                // Use relative URL for proxy support
-                const apiUrl = '/api/v1/auth/login';
-                console.log('Sending login request to:', apiUrl);
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(userDetails),
-                    mode: 'cors',
-                    credentials: 'omit' // Don't send cookies
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    // Store the JWT token in a cookie
-                    document.cookie = `token=${result.access_token}; path=/`;
-                    // Redirect to the main page
-                    window.location.replace('../index.html');
-                } else if (response.status === 401) {
-                    alert('Invalid credentials. Please try again.');
-                } else {
-                    alert('Login failed: ' + response.statusText);
-                }
-            } catch (err) {
-                console.error('Error during login:', err);
-                console.error('Error details:', err.message);
-                alert('Login error: ' + err.message + '. Please check if the backend server is running.');
-            }
-        });
-    }
-
-    const loginLink = document.getElementById('login-link');
-    if (loginLink) {
-        loginLink.addEventListener('click', (event) => {
-            event.preventDefault();
-            window.location.assign('templates/login.html');
-        });
-    }
-
-    // Add event listener for price filter
     const priceFilter = document.getElementById('price-filter');
     if (priceFilter) {
         priceFilter.addEventListener('change', () => {
             const token = getCookie('token');
-            displayPlaces(token);
+            fetchPlaces(token);
         });
     }
-
-    verifyUserSession();
 });
 
 /* Places */
@@ -116,7 +55,6 @@ async function retrieveLocations(authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        // Add mode: 'cors' to explicitly request CORS
         const request = await fetch(apiUrl, {
             method: 'GET',
             headers: headers,
@@ -180,66 +118,89 @@ async function renderLocations(authToken) {
 
 /* CheckAuth */
 
-function verifyUserSession() {
-    const token = getCookie('token');
-    const loginBtn = document.querySelector('.auth-button');
-    const loginLink = document.getElementById('login-link');
-
-    if (token) {
-        // User is logged in
-        if (loginBtn) {
-            loginBtn.textContent = 'Logout';
-            loginBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                // Clear the token cookie
-                document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                // Redirect to the main page
-                window.location.replace('../index.html');
-            });
-        }
-
-        if (loginLink) {
-            loginLink.style.display = 'none';
-        }
-
-        // If we're on the main page, fetch places data
-        if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
-            displayPlaces(token);
-        }
-    } else {
-        // User is not logged in
-        if (loginBtn) {
-            loginBtn.textContent = 'Login';
-            loginBtn.addEventListener('click', () => {
-                window.location.assign('templates/login.html');
-            });
-        }
-
-        if (loginLink) {
-            loginLink.style.display = 'block';
-        }
-
-        // If we're on the main page, fetch places data without authentication
-        if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
-            displayPlaces(null);
-        }
-    }
-}
-
 function checkAuthentication() {
     const token = getCookie('token');
     const loginLink = document.getElementById('login-link');
+    const logoutButton = document.getElementById('logout-button');
 
     if (!token) {
-        loginLink.style.display = 'block';
+        if (loginLink) loginLink.style.display = 'block';
+        if (logoutButton) logoutButton.style.display = 'none'; // Hide logout button
     } else {
-        loginLink.style.display = 'none';
-        // Fetch places data if the user is authenticated
-        displayPlaces(token);
+        if (loginLink) loginLink.style.display = 'none';
+        if (logoutButton) {
+            logoutButton.style.display = 'block';
+            logoutButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                window.location.replace('../index.html');
+            });
+        }
+        fetchPlaces(token);
     }
 }
 
 function getCookie(name) {
     const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
     return v ? v[2] : null;
+}
+
+async function fetchPlaces(token) {
+    try {
+        const apiUrl = '/api/v1/places';
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch places');
+        }
+
+        const places = await response.json();
+        displayPlaces(places);
+    } catch (error) {
+        console.error('Error fetching places:', error);
+    }
+}
+
+function displayPlaces(places) {
+    const placesList = document.getElementById('places-list');
+    placesList.innerHTML = ''; // Clear existing content
+
+    places.forEach(place => {
+        const placeElement = document.createElement('div');
+        placeElement.className = 'place';
+        placeElement.innerHTML = `
+            <h2>${place.name}</h2>
+            <p>${place.description}</p>
+            <p>Location: ${place.location}</p>
+            <p>Price: $${place.price} per night</p>
+        `;
+        placesList.appendChild(placeElement);
+    });
+
+    applyPriceFilter();
+}
+
+function applyPriceFilter() {
+    const selectedPrice = parseFloat(document.getElementById('price-filter').value);
+    const places = document.querySelectorAll('.place');
+
+    places.forEach(place => {
+        const price = parseFloat(place.querySelector('p:nth-child(4)').textContent.replace(/[^0-9.-]+/g, ""));
+        if (isNaN(selectedPrice) || selectedPrice === 'all' || price <= selectedPrice) {
+            place.style.display = 'block';
+        } else {
+            place.style.display = 'none';
+        }
+    });
 }
