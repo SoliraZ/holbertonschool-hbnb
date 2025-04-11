@@ -56,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchPlaces(token);
         });
     }
+
+    const placeId = getPlaceIdFromURL();
+    if (placeId) {
+        const token = checkAuthentication();
+        fetchPlaceDetails(token, placeId);
+    }
 });
 
 /* Places */
@@ -166,10 +172,12 @@ function checkAuthentication() {
     const token = getCookie('token');
     const loginLink = document.getElementById('login-link');
     const logoutButton = document.getElementById('logout-button');
+    const addReviewSection = document.getElementById('add-review');
 
     if (!token) {
         if (loginLink) loginLink.style.display = 'block';
         if (logoutButton) logoutButton.style.display = 'none'; // Hide logout button
+        if (addReviewSection) addReviewSection.style.display = 'none';
     } else {
         if (loginLink) loginLink.style.display = 'none';
         if (logoutButton) {
@@ -180,8 +188,10 @@ function checkAuthentication() {
                 window.location.replace('../index.html');
             });
         }
+        if (addReviewSection) addReviewSection.style.display = 'block';
         fetchPlaces(token);
     }
+    return token;
 }
 
 function getCookie(name) {
@@ -227,17 +237,20 @@ function displayPlaces(places) {
 
     places.forEach(place => {
         const placeElement = document.createElement('div');
-        placeElement.className = 'place';
+        placeElement.className = 'place-card';
         placeElement.innerHTML = `
             <h2>${place.title || 'No Title'}</h2>
-            <p>${place.description || 'No Description'}</p>
-            <p>Location: ${place.location || 'No Location'}</p>
             <p>Price: $${place.price || '0'} per night</p>
+            <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
         `;
         placesList.appendChild(placeElement);
     });
 
     applyPriceFilter();
+}
+
+function viewDetails(placeId) {
+    window.location.href = `templates/place.html?placeId=${placeId}`;
 }
 
 function applyPriceFilter() {
@@ -252,4 +265,58 @@ function applyPriceFilter() {
             place.style.display = 'none';
         }
     });
+}
+
+function getPlaceIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('placeId');
+}
+
+async function fetchPlaceDetails(token, placeId) {
+    try {
+        const apiUrl = `/api/v1/places/${placeId}`;
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        } else {
+            console.error('No token found, user is not authenticated.');
+            return;
+        }
+
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch place details');
+        }
+
+        const place = await response.json();
+        console.log('Fetched place details:', place);
+        displayPlaceDetails(place);
+    } catch (error) {
+        console.error('Error fetching place details:', error);
+    }
+}
+
+function displayPlaceDetails(place) {
+    const placeDetails = document.getElementById('place-details');
+    if (!placeDetails) {
+        console.error('Element with ID "place-details" not found.');
+        return;
+    }
+
+    placeDetails.innerHTML = `
+        <h2>${place.name || 'No Name'}</h2>
+        <p>${place.description || 'No Description'}</p>
+        <p>Price: $${place.price || '0'} per night</p>
+        <h3>Amenities</h3>
+        <ul>${(place.amenities || []).map(amenity => `<li>${amenity}</li>`).join('')}</ul>
+        <h3>Reviews</h3>
+        <ul>${(place.reviews || []).map(review => `<li>${review.comment} by ${review.user} - Rating: ${review.rating}</li>`).join('')}</ul>
+    `;
 }
