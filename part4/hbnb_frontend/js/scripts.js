@@ -288,11 +288,17 @@ function viewDetails(placeId) {
 function checkAndHandleTokenExpiry() {
     const token = getCookie('token');
     if (!token || !isTokenValid(token)) {
+        // Clear the token
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        // Clear any other auth-related cookies or storage
+        localStorage.clear();
+        sessionStorage.clear();
+
         alert('Session expired. Please log in again.');
         window.location.href = '../templates/login.html';
-        return false; // Indicate that the token is expired
+        return false;
     }
-    return true; // Token is valid
+    return true;
 }
 
 function isTokenValid(token) {
@@ -347,46 +353,80 @@ function getPlaceIdFromURL() {
 
 async function fetchPlaceDetails(token, placeId) {
     try {
-        console.log('Token:', token);
-        console.log('Token Valid:', isTokenValid(token));
-
-        if (!isTokenValid(token)) {
-            alert('Session expired. Please log in again.');
-            window.location.href = '../templates/login.html';
-            return;
-        }
-
-        const apiUrl = `/api/v1/places/${placeId}`;
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        } else {
-            console.error('No token found, user is not authenticated.');
-            return;
-        }
-
-        const response = await fetch(apiUrl, {
+        const response = await fetch(`http://127.0.0.1:5000/api/v1/places/${placeId}`, {
             method: 'GET',
-            headers: headers
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            mode: 'cors',
+            credentials: 'include'
         });
 
         if (!response.ok) {
             if (response.status === 401) {
-                alert('Session expired. Please log in again.');
-                window.location.href = '../templates/login.html';
+                checkAndHandleTokenExpiry();
                 return;
             }
             throw new Error('Failed to fetch place details');
         }
 
         const place = await response.json();
-        console.log('Fetched place details:', place);
         displayPlaceDetails(place);
+
+        // Fetch reviews for this place
+        try {
+            const reviewsResponse = await fetch(`http://127.0.0.1:5000/api/v1/places/${placeId}/reviews`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors',
+                credentials: 'include'
+            });
+
+            if (reviewsResponse.ok) {
+                const reviews = await reviewsResponse.json();
+                displayReviews(reviews);
+            } else {
+                // If reviews endpoint is not available, just show "No reviews yet"
+                displayReviews([]);
+            }
+        } catch (reviewsError) {
+            console.error('Error fetching reviews:', reviewsError);
+            // If there's an error fetching reviews, just show "No reviews yet"
+            displayReviews([]);
+        }
     } catch (error) {
         console.error('Error fetching place details:', error);
+        alert('Failed to load place details. Please try again.');
+    }
+}
+
+function displayReviews(reviews) {
+    const reviewsList = document.getElementById('reviews-list');
+    if (!reviewsList) return;
+
+    if (reviews && reviews.length > 0) {
+        reviewsList.innerHTML = reviews.map(review => `
+            <div class="review">
+                <div class="review-header">
+                    <span class="user-name">${review.user_name || 'Anonymous'}</span>
+                    <div class="rating">
+                        ${Array(5).fill().map((_, i) =>
+            `<span class="star ${i < review.rating ? 'filled' : ''}">★</span>`
+        ).join('')}
+                    <strong>${review.user_name || 'Anonymous'}</strong>
+                    <div class="review-rating">
+                        ${generateStarRating(review.rating || 0)}
+                    </div>
+                </div>
+                <p class="review-content">${review.text || 'No review text'}</p>
+            </div>
+        `).join('');
+    } else {
+        reviewsList.innerHTML = '<p class="no-reviews">No reviews yet</p>';
     }
 }
 
@@ -437,20 +477,7 @@ function displayPlaceDetails(place) {
         <div class="reviews-list-box">
             <h3>Reviews</h3>
             <div id="reviews-list">
-                ${place.reviews && place.reviews.length > 0
-            ? place.reviews.map(review => `
-                        <div class="review-item">
-                            <div class="review-header">
-                                <strong>${review.user_name || 'Anonymous'}</strong>
-                                <div class="review-rating">
-                                    ${generateStarRating(review.rating || 0)}
-                                </div>
-                            </div>
-                            <p class="review-content">${review.text || 'No review text'}</p>
-                        </div>
-                    `).join('')
-            : '<p class="no-reviews">No reviews yet</p>'
-        }
+                <p class="no-reviews">Loading reviews...</p>
             </div>
         </div>
     `;
@@ -474,65 +501,55 @@ function generateStarRating(rating) {
 
 // Function to set up the review form event listeners
 function setupReviewForm(placeId) {
+    const form = document.getElementById('review-form');
+    if (!form) return;
+
     const stars = document.querySelectorAll('.star');
     const ratingInput = document.getElementById('rating-value');
     const reviewText = document.getElementById('review-text');
     const charCount = document.getElementById('char-count');
     const submitButton = document.getElementById('submit-review');
-    const reviewForm = document.getElementById('review-form');
+
+    // Get token and verify
+    const token = getCookie('token');
+    if (!token || !isTokenValid(token)) {
+        // Hide review form and show login message
+        const reviewFormBox = document.querySelector('.review-form-box');
+        if (reviewFormBox) {
+            reviewFormBox.innerHTML = '<p>Please <a href="../templates/login.html">login</a> to write a review.</p>';
+        }
+        return;
+    }
 
     // Star rating functionality
     stars.forEach(star => {
         star.addEventListener('click', () => {
             const rating = parseInt(star.getAttribute('data-rating'));
             ratingInput.value = rating;
-
-            // Update star display
             stars.forEach(s => {
-                const starRating = parseInt(s.getAttribute('data-rating'));
-                if (starRating <= rating) {
+                if (parseInt(s.getAttribute('data-rating')) <= rating) {
                     s.classList.add('selected');
                 } else {
                     s.classList.remove('selected');
                 }
             });
-
             updateSubmitButton();
-        });
-
-        // Hover effect
-        star.addEventListener('mouseover', () => {
-            const rating = parseInt(star.getAttribute('data-rating'));
-            stars.forEach(s => {
-                const starRating = parseInt(s.getAttribute('data-rating'));
-                if (starRating <= rating) {
-                    s.classList.add('hover');
-                } else {
-                    s.classList.remove('hover');
-                }
-            });
-        });
-
-        star.addEventListener('mouseout', () => {
-            stars.forEach(s => s.classList.remove('hover'));
         });
     });
 
-    // Character count for review text
+    // Character count
     reviewText.addEventListener('input', () => {
-        const count = reviewText.value.length;
-        charCount.textContent = count;
+        const length = reviewText.value.length;
+        charCount.textContent = length;
         updateSubmitButton();
     });
 
     // Form submission
-    reviewForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-        const token = getCookie('token');
-        if (!token || !isTokenValid(token)) {
-            alert('Session expired. Please log in again.');
-            window.location.href = '../templates/login.html';
+        // Verify token again before submitting
+        if (!checkAndHandleTokenExpiry()) {
             return;
         }
 
@@ -544,11 +561,8 @@ function setupReviewForm(placeId) {
             return;
         }
 
-        console.log('Token:', token);
-        console.log('Authorization Header:', `Bearer ${token}`);
-
         try {
-            const response = await fetch(`/api/v1/reviews`, {
+            const response = await fetch('http://127.0.0.1:5000/api/v1/reviews/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -561,16 +575,15 @@ function setupReviewForm(placeId) {
                 })
             });
 
-            console.log('Response Status:', response.status);
-            console.log('Response Headers:', response.headers);
-
             if (!response.ok) {
                 if (response.status === 401) {
-                    alert('Session expired. Please log in again.');
-                    window.location.href = '../templates/login.html';
+                    checkAndHandleTokenExpiry();
                     return;
                 }
-                throw new Error('Failed to post review');
+                // Get the error message from the response
+                const errorData = await response.json();
+                console.error('Server error response:', errorData);
+                throw new Error(errorData.message || 'Failed to post review');
             }
 
             // Clear the form
@@ -580,16 +593,21 @@ function setupReviewForm(placeId) {
             stars.forEach(s => s.classList.remove('selected'));
             updateSubmitButton();
 
+            // Show success message
+            alert('Review posted successfully!');
+
             // Refresh the place details to show the new review
-            fetchPlaceDetails(token, placeId);
+            const currentToken = getCookie('token');
+            if (currentToken && isTokenValid(currentToken)) {
+                fetchPlaceDetails(currentToken, placeId);
+            }
 
         } catch (error) {
             console.error('Error posting review:', error);
-            alert('Failed to post review. Please try again.');
+            alert('Failed to post review: ' + error.message);
         }
     });
 
-    // Function to update the submit button state
     function updateSubmitButton() {
         const rating = parseInt(ratingInput.value);
         const text = reviewText.value.trim();
