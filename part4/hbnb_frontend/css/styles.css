@@ -25,14 +25,13 @@ body {
 }
 
 header {
+    background-color: white;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 1000;
-    background-color: #ffffff;
-    color: #333;
-    padding: 1rem 2rem;
+    padding: 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -86,6 +85,7 @@ main {
     align-items: center;
     margin-top: 80px;
     /* Adjust based on header height */
+    padding-bottom: 100px;
 }
 
 /* Places Grid Layout */
@@ -390,50 +390,26 @@ footer {
 .footer-details {
     max-width: 1200px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.footer-details p {
+    margin: 0;
 }
 
 .footer-details a {
-    color: #fff;
+    color: #4a90e2;
     text-decoration: none;
     margin: 0 10px;
+    transition: color 0.3s ease;
 }
 
 .footer-details a:hover {
+    color: #357ab8;
     text-decoration: underline;
-}
-
-/* Logout Button Styling */
-#logout-button {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#logout-button:hover {
-    background-color: #357ab8;
-    transform: translateY(-2px);
-}
-
-/* Login Button Styling */
-#login-button {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#login-button:hover {
-    background-color: #357ab8;
-    transform: translateY(-2px);
 }
 
 /* Auth Page Styling */
@@ -492,10 +468,10 @@ footer {
     padding: 0.8rem 1.5rem;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    width: 100%;
-    font-size: 1rem;
+    transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    width: 100%;
 }
 
 .auth-submit:hover {
@@ -565,4 +541,197 @@ footer {
     color: #999;
     display: block;
     margin-top: 10px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.brand .logo {
+    height: 40px;
+    width: auto;
+}
+
+.brand .home-button {
+    background-color: #4a90e2;
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.brand .home-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+.home-button {
+    position: static;
+    padding: 8px 16px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+}
+
+.home-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.home-button i {
+    margin-right: 8px;
+}
+
+/* Common Button Styles */
+.btn-primary {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+.btn-primary.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Login/Logout Button Styles */
+#login-button,
+#logout-button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+#login-button:hover,
+#logout-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+/* Auth Submit Button */
+.auth-submit {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    width: 100%;
+}
+
+.auth-submit:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+/* Brand Home Button */
+.brand .home-button {
+    background-color: #4a90e2;
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.brand .home-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+/* Star Rating Unified Styles */
+.star {
+    color: #ccc;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.star.filled,
+.star.selected {
+    color: #ffd700;
+}
+
+.star:hover {
+    transform: scale(1.2);
+}
+
+.rating {
+    display: flex;
+    gap: 4px;
+    margin: 10px 0;
+}
+
+/* Review Unified Styles */
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.review-text {
+    color: #666;
+    margin: 15px 0;
+    line-height: 1.4;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Common Box Styles */
+.box-common {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    border: 1px solid #eaeaea;
+}
+
+/* Apply box styles */
+.place-details-box,
+.review-form-box,
+.reviews-list-box,
+.auth-container {
+    composes: box-common;
 }
