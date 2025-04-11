@@ -47,7 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    checkAuthentication();
+    // Check authentication on page load
+    const token = checkAuthentication();
+
+    // If we're on a page that requires authentication (like place details)
+    // and the token is expired, redirect to login
+    if (window.location.pathname.includes('place.html') && !token) {
+        alert('Session expired. Please log in again.');
+        window.location.href = '../templates/login.html';
+        return;
+    }
 
     // Set up price filter event listener
     const priceFilter = document.getElementById('price-filter');
@@ -59,8 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const placeId = getPlaceIdFromURL();
     if (placeId) {
-        const token = checkAuthentication();
-        fetchPlaceDetails(token, placeId);
+        // Only fetch place details if we have a valid token
+        if (token) {
+            fetchPlaceDetails(token, placeId);
+        }
     }
 });
 
@@ -178,7 +189,25 @@ function checkAuthentication() {
         if (loginLink) loginLink.style.display = 'block';
         if (logoutButton) logoutButton.style.display = 'none'; // Hide logout button
         if (addReviewSection) addReviewSection.style.display = 'none';
+        return null;
     } else {
+        // Check if token is expired
+        if (!isTokenValid(token)) {
+            // Clear the expired token
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+            if (loginLink) loginLink.style.display = 'block';
+            if (logoutButton) logoutButton.style.display = 'none';
+            if (addReviewSection) addReviewSection.style.display = 'none';
+
+            // If we're on a page that requires authentication, show alert and redirect
+            if (window.location.pathname.includes('place.html')) {
+                alert('Session expired. Please log in again.');
+                window.location.href = '../templates/login.html';
+            }
+            return null;
+        }
+
         if (loginLink) loginLink.style.display = 'none';
         if (logoutButton) {
             logoutButton.style.display = 'block';
@@ -190,8 +219,8 @@ function checkAuthentication() {
         }
         if (addReviewSection) addReviewSection.style.display = 'block';
         fetchPlaces(token);
+        return token;
     }
-    return token;
 }
 
 function getCookie(name) {
@@ -270,6 +299,9 @@ function isTokenValid(token) {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const expiry = payload.exp * 1000; // Convert to milliseconds
+        console.log('Token Payload:', payload);
+        console.log('Token Expiry:', new Date(expiry));
+        console.log('Current Time:', new Date());
         return Date.now() < expiry;
     } catch (error) {
         console.error('Error checking token validity:', error);
@@ -315,6 +347,15 @@ function getPlaceIdFromURL() {
 
 async function fetchPlaceDetails(token, placeId) {
     try {
+        console.log('Token:', token);
+        console.log('Token Valid:', isTokenValid(token));
+
+        if (!isTokenValid(token)) {
+            alert('Session expired. Please log in again.');
+            window.location.href = '../templates/login.html';
+            return;
+        }
+
         const apiUrl = `/api/v1/places/${placeId}`;
         const headers = {
             'Content-Type': 'application/json'
@@ -333,6 +374,11 @@ async function fetchPlaceDetails(token, placeId) {
         });
 
         if (!response.ok) {
+            if (response.status === 401) {
+                alert('Session expired. Please log in again.');
+                window.location.href = '../templates/login.html';
+                return;
+            }
             throw new Error('Failed to fetch place details');
         }
 
@@ -347,17 +393,222 @@ async function fetchPlaceDetails(token, placeId) {
 function displayPlaceDetails(place) {
     const placeDetails = document.getElementById('place-details');
     if (!placeDetails) {
-        console.error('Element with ID "place-details" not found.');
+        console.error('Element with ID place-details not found');
         return;
     }
 
+    // Create container for both details and reviews
     placeDetails.innerHTML = `
-        <h2>${place.title || 'No Title'}</h2>
-        <p>${place.description || 'No Description'}</p>
-        <p>Price: $${place.price || '0'} per night</p>
-        <h3>Amenities</h3>
-        <ul>${(place.amenities || []).map(amenity => `<li>${amenity.name}</li>`).join('')}</ul>
-        <h3>Reviews</h3>
-        <ul>${(place.reviews || []).map(review => `<li>${review.text} - Rating: ${review.rating}</li>`).join('')}</ul>
+        <div id="place-details-container">
+            <div class="place-details-box">
+                <h2>${place.title || 'Untitled Place'}</h2>
+                <div class="place-info">
+                    <p><strong>Host:</strong> ${place.owner_name || 'Unknown'}</p>
+                    <p><strong>Description:</strong> ${place.description || 'No Description'}</p>
+                    <p><strong>Price:</strong> $${place.price || '0'}/night</p>
+                    <p><strong>Location:</strong> ${place.latitude || '0'}, ${place.longitude || '0'}</p>
+                    <p><strong>Amenities:</strong> ${place.amenities ? place.amenities.map(a => a.name).join(', ') : 'None'}</p>
+                </div>
+            </div>
+            <div class="review-form-box">
+                <h3>Write a Review</h3>
+                <form id="review-form">
+                    <div class="star-rating">
+                        <p>Your Rating:</p>
+                        <div class="stars">
+                            <span class="star" data-rating="1">★</span>
+                            <span class="star" data-rating="2">★</span>
+                            <span class="star" data-rating="3">★</span>
+                            <span class="star" data-rating="4">★</span>
+                            <span class="star" data-rating="5">★</span>
+                        </div>
+                        <input type="hidden" id="rating-value" name="rating" value="0">
+                    </div>
+                    <div class="review-text">
+                        <p>Your Review (max 200 characters):</p>
+                        <textarea id="review-text" name="text" maxlength="200" placeholder="Write your review here..."></textarea>
+                        <div class="char-count"><span id="char-count">0</span>/200</div>
+                    </div>
+                    <button type="submit" id="submit-review" class="submit-button disabled">Post Review</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="reviews-list-box">
+            <h3>Reviews</h3>
+            <div id="reviews-list">
+                ${place.reviews && place.reviews.length > 0
+            ? place.reviews.map(review => `
+                        <div class="review-item">
+                            <div class="review-header">
+                                <strong>${review.user_name || 'Anonymous'}</strong>
+                                <div class="review-rating">
+                                    ${generateStarRating(review.rating || 0)}
+                                </div>
+                            </div>
+                            <p class="review-content">${review.text || 'No review text'}</p>
+                        </div>
+                    `).join('')
+            : '<p class="no-reviews">No reviews yet</p>'
+        }
+            </div>
+        </div>
     `;
+
+    // Set up event listeners for the review form
+    setupReviewForm(place.id);
 }
+
+// Function to generate star rating HTML
+function generateStarRating(rating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            stars += '<span class="star filled">★</span>';
+        } else {
+            stars += '<span class="star">★</span>';
+        }
+    }
+    return stars;
+}
+
+// Function to set up the review form event listeners
+function setupReviewForm(placeId) {
+    const stars = document.querySelectorAll('.star');
+    const ratingInput = document.getElementById('rating-value');
+    const reviewText = document.getElementById('review-text');
+    const charCount = document.getElementById('char-count');
+    const submitButton = document.getElementById('submit-review');
+    const reviewForm = document.getElementById('review-form');
+
+    // Star rating functionality
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const rating = parseInt(star.getAttribute('data-rating'));
+            ratingInput.value = rating;
+
+            // Update star display
+            stars.forEach(s => {
+                const starRating = parseInt(s.getAttribute('data-rating'));
+                if (starRating <= rating) {
+                    s.classList.add('selected');
+                } else {
+                    s.classList.remove('selected');
+                }
+            });
+
+            updateSubmitButton();
+        });
+
+        // Hover effect
+        star.addEventListener('mouseover', () => {
+            const rating = parseInt(star.getAttribute('data-rating'));
+            stars.forEach(s => {
+                const starRating = parseInt(s.getAttribute('data-rating'));
+                if (starRating <= rating) {
+                    s.classList.add('hover');
+                } else {
+                    s.classList.remove('hover');
+                }
+            });
+        });
+
+        star.addEventListener('mouseout', () => {
+            stars.forEach(s => s.classList.remove('hover'));
+        });
+    });
+
+    // Character count for review text
+    reviewText.addEventListener('input', () => {
+        const count = reviewText.value.length;
+        charCount.textContent = count;
+        updateSubmitButton();
+    });
+
+    // Form submission
+    reviewForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const token = getCookie('token');
+        if (!token || !isTokenValid(token)) {
+            alert('Session expired. Please log in again.');
+            window.location.href = '../templates/login.html';
+            return;
+        }
+
+        const rating = parseInt(ratingInput.value);
+        const text = reviewText.value.trim();
+
+        if (rating === 0 || text.length === 0) {
+            alert('Please provide both a rating and a review text.');
+            return;
+        }
+
+        console.log('Token:', token);
+        console.log('Authorization Header:', `Bearer ${token}`);
+
+        try {
+            const response = await fetch(`/api/v1/reviews`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    rating: rating,
+                    text: text,
+                    place_id: placeId
+                })
+            });
+
+            console.log('Response Status:', response.status);
+            console.log('Response Headers:', response.headers);
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    alert('Session expired. Please log in again.');
+                    window.location.href = '../templates/login.html';
+                    return;
+                }
+                throw new Error('Failed to post review');
+            }
+
+            // Clear the form
+            ratingInput.value = 0;
+            reviewText.value = '';
+            charCount.textContent = '0';
+            stars.forEach(s => s.classList.remove('selected'));
+            updateSubmitButton();
+
+            // Refresh the place details to show the new review
+            fetchPlaceDetails(token, placeId);
+
+        } catch (error) {
+            console.error('Error posting review:', error);
+            alert('Failed to post review. Please try again.');
+        }
+    });
+
+    // Function to update the submit button state
+    function updateSubmitButton() {
+        const rating = parseInt(ratingInput.value);
+        const text = reviewText.value.trim();
+
+        if (rating > 0 && text.length > 0) {
+            submitButton.classList.remove('disabled');
+        } else {
+            submitButton.classList.add('disabled');
+        }
+    }
+}
+
+function checkTokenAndHideLogin() {
+    const token = getCookie('token');
+    const loginButton = document.getElementById('login-button');
+    if (token && isTokenValid(token)) {
+        if (loginButton) loginButton.style.display = 'none';
+    }
+}
+
+// Call this function on page load
+checkTokenAndHideLogin();
