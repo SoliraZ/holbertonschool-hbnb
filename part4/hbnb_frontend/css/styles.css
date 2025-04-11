@@ -16,7 +16,8 @@ body {
 }
 
 body {
-    background-color: #f4f4f4;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom right, #f0f8ff, #e6f7ff);
     color: #333;
     display: flex;
     flex-direction: column;
@@ -24,12 +25,18 @@ body {
 }
 
 header {
-    background-color: #69d7bd;
-    color: #fff;
-    padding: 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: #ffffff;
+    color: #333;
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .container {
@@ -74,23 +81,273 @@ nav ul li {
 main {
     padding: 2rem;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 80px;
+    /* Adjust based on header height */
 }
 
-.place-card,
-.review-card {
-    margin: 20px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
+/* Places Grid Layout */
+#location-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.place-card {
     background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.place-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.place-card h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+}
+
+.place-card p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.place-card .details-button {
+    background-color: #69d7bd;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.place-card .details-button:hover {
+    background-color: #4fb39d;
+}
+
+/* Details and Review Form Layout */
+#place-details-container {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Place Details Box Styling */
+.place-details-box {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    flex: 2;
+    height: fit-content;
+    border: 1px solid #e0e0e0;
+}
+
+.place-details-box h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.place-info {
+    margin-bottom: 2rem;
+}
+
+.place-info p {
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    padding: 0.5rem 0;
+}
+
+/* Review Form Box Styling */
+.review-form-box {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    flex: 1;
+    height: fit-content;
+    border: 1px solid #e0e0e0;
+    min-width: 350px;
+    width: 100%;
+}
+
+.review-form-box h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.4rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Reviews List Box Styling */
+.reviews-list-box {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem 3rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    border: 1px solid #e0e0e0;
+}
+
+.reviews-list-box h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.4rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0 1rem;
+}
+
+.review-item {
+    padding: 2rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin: 0 1rem;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.review-content {
+    line-height: 1.5;
+}
+
+.no-reviews {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 2rem 0;
+}
+
+/* Review Rating Stars */
+.review-rating {
+    margin: 0.5rem 0;
+}
+
+.star {
+    color: #ddd;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.star.filled,
+.star.selected,
+.star.hover {
+    color: #ffd700;
+}
+
+/* Review Form */
+.star-rating {
+    margin-bottom: 1.5rem;
+}
+
+.star-rating p {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.stars {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.stars .star {
+    font-size: 1.8rem;
+}
+
+.review-text {
+    margin-bottom: 1.5rem;
+}
+
+.review-text p {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+.submit-button {
+    background-color: #69d7bd;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.submit-button:hover:not(.disabled) {
+    background-color: #4fb39d;
+}
+
+.submit-button.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }
 
 footer {
-    background-color: #69d7bd;
-    color: #fff;
-    padding: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: #ffffff;
+    color: #333;
+    padding: 1rem 2rem;
     text-align: center;
-    margin-top: auto;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .footer-details {
@@ -106,4 +363,105 @@ footer {
 
 .footer-details a:hover {
     text-decoration: underline;
+}
+
+/* Logout Button Styling */
+#logout-button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#logout-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+/* Login Button Styling */
+#login-button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#login-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+/* Auth Page Styling */
+.auth-page {
+    padding-top: 100px;
+    padding-bottom: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+}
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auth-box {
+    width: 100%;
+}
+
+.auth-box h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    color: #4a90e2;
+}
+
+.auth-box label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+.auth-box input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.auth-submit {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    width: 100%;
+    font-size: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.auth-submit:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
 }
