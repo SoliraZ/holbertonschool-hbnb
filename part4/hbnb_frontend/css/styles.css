@@ -10,13 +10,21 @@
     font-family: Arial, sans-serif;
 }
 
+html,
+body {
+    height: 100%;
+}
+
 body {
     background-color: #f4f4f4;
     color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 header {
-    background-color: #333;
+    background-color: #69d7bd;
     color: #fff;
     padding: 1rem;
     display: flex;
@@ -65,6 +73,7 @@ nav ul li {
 
 main {
     padding: 2rem;
+    flex: 1;
 }
 
 .place-card,
@@ -74,4 +83,27 @@ main {
     border: 1px solid #ddd;
     border-radius: 10px;
     background-color: #fff;
+}
+
+footer {
+    background-color: #69d7bd;
+    color: #fff;
+    padding: 1rem;
+    text-align: center;
+    margin-top: auto;
+}
+
+.footer-details {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-details a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.footer-details a:hover {
+    text-decoration: underline;
 }
