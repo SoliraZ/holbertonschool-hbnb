@@ -311,12 +311,12 @@ function displayPlaceDetails(place) {
     }
 
     placeDetails.innerHTML = `
-        <h2>${place.name || 'No Name'}</h2>
+        <h2>${place.title || 'No Title'}</h2>
         <p>${place.description || 'No Description'}</p>
         <p>Price: $${place.price || '0'} per night</p>
         <h3>Amenities</h3>
-        <ul>${(place.amenities || []).map(amenity => `<li>${amenity}</li>`).join('')}</ul>
+        <ul>${(place.amenities || []).map(amenity => `<li>${amenity.name}</li>`).join('')}</ul>
         <h3>Reviews</h3>
-        <ul>${(place.reviews || []).map(review => `<li>${review.comment} by ${review.user} - Rating: ${review.rating}</li>`).join('')}</ul>
+        <ul>${(place.reviews || []).map(review => `<li>${review.text} - Rating: ${review.rating}</li>`).join('')}</ul>
     `;
 }
