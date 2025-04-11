@@ -250,7 +250,31 @@ function displayPlaces(places) {
 }
 
 function viewDetails(placeId) {
+    if (!checkAndHandleTokenExpiry()) {
+        return; // Stop execution if token is expired
+    }
     window.location.href = `templates/place.html?placeId=${placeId}`;
+}
+
+function checkAndHandleTokenExpiry() {
+    const token = getCookie('token');
+    if (!token || !isTokenValid(token)) {
+        alert('Session expired. Please log in again.');
+        window.location.href = '../templates/login.html';
+        return false; // Indicate that the token is expired
+    }
+    return true; // Token is valid
+}
+
+function isTokenValid(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expiry = payload.exp * 1000; // Convert to milliseconds
+        return Date.now() < expiry;
+    } catch (error) {
+        console.error('Error checking token validity:', error);
+        return false;
+    }
 }
 
 function applyPriceFilter() {
@@ -289,36 +313,7 @@ function getPlaceIdFromURL() {
     return params.get('placeId');
 }
 
-function checkTokenExpiry(token) {
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const expiry = payload.exp * 1000; // Convert to milliseconds
-        console.log(`Token expiry: ${new Date(expiry)}`);
-        return Date.now() < expiry;
-    } catch (error) {
-        console.error('Error checking token expiry:', error);
-        return false;
-    }
-}
-
-function handleTokenExpiry() {
-    const token = getCookie('token');
-    const messageShown = sessionStorage.getItem('sessionExpiredMessageShown');
-
-    console.log('Checking token expiry...');
-    if (!token || !checkTokenExpiry(token)) {
-        if (!messageShown) {
-            alert('Session expired. Please log in again.');
-            sessionStorage.setItem('sessionExpiredMessageShown', 'true');
-        }
-        window.location.href = '../templates/login.html'; // Redirect to login page
-    } else {
-        sessionStorage.removeItem('sessionExpiredMessageShown');
-    }
-}
-
 async function fetchPlaceDetails(token, placeId) {
-    handleTokenExpiry(); // Call here to ensure token is valid before making the request
     try {
         const apiUrl = `/api/v1/places/${placeId}`;
         const headers = {

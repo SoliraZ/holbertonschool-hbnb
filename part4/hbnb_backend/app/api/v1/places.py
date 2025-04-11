@@ -66,7 +66,7 @@ class PlaceResource(Resource):
         """Get place details by ID"""
         try:
             place_data = facade.get_place(place_id)
-            return place_data, 200
+            return place_data.to_dict(), 200
         except ValueError as e:
             return {'error': str(e)}, 404
 
