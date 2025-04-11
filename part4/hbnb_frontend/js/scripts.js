@@ -3,6 +3,50 @@
 */
 
 document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('auth-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const credentials = new FormData(loginForm);
+            const userDetails = {
+                email: credentials.get('email'),
+                password: credentials.get('password')
+            };
+            console.log('User credentials:', userDetails);
+
+            try {
+                const apiUrl = '/api/v1/auth/login';
+                console.log('Sending login request to:', apiUrl);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userDetails),
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+
+                console.log('Login response status:', response.status);
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Login successful:', result);
+                    document.cookie = `token=${result.access_token}; path=/`;
+                    window.location.replace('../index.html');
+                } else if (response.status === 401) {
+                    alert('Invalid credentials. Please try again.');
+                } else {
+                    alert('Login failed: ' + response.statusText);
+                }
+            } catch (err) {
+                console.error('Error during login:', err);
+                console.error('Error details:', err.message);
+                alert('Login error: ' + err.message + '. Please check if the backend server is running.');
+            }
+        });
+    }
+
     checkAuthentication();
 
     const priceFilter = document.getElementById('price-filter');
@@ -173,17 +217,22 @@ async function fetchPlaces(token) {
 }
 
 function displayPlaces(places) {
-    const placesList = document.getElementById('places-list');
+    const placesList = document.getElementById('location-container');
+    if (!placesList) {
+        console.error('Element with ID "location-container" not found.');
+        return;
+    }
+
     placesList.innerHTML = ''; // Clear existing content
 
     places.forEach(place => {
         const placeElement = document.createElement('div');
         placeElement.className = 'place';
         placeElement.innerHTML = `
-            <h2>${place.name}</h2>
-            <p>${place.description}</p>
-            <p>Location: ${place.location}</p>
-            <p>Price: $${place.price} per night</p>
+            <h2>${place.title || 'No Title'}</h2>
+            <p>${place.description || 'No Description'}</p>
+            <p>Location: ${place.location || 'No Location'}</p>
+            <p>Price: $${place.price || '0'} per night</p>
         `;
         placesList.appendChild(placeElement);
     });
