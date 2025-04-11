@@ -54,6 +54,7 @@ class Review(BaseModel):
         return {
             'id': self.id,
             'user_id': self.user_id,
+            'user_name': self.author.first_name if self.author else "Unknown Name",
             'place_id': self.place_id,
             'rating': self.rating,
             'text': self.text,
