@@ -10,17 +10,17 @@
 
 <body>
     <header>
-        <div class="container flex-header">
-            <a href="index.html"><img class="logo" src="images/logo.png" alt="HBnB"></a>
-            <nav class="nav-menu">
-                <ul>
-                    <li><button id="login-button" class="button auth-button"
-                            onclick="location.href='templates/login.html'">Login</button></li>
-                    <li><button id="logout-button" class="button auth-button" style="display: none;">Logout</button>
-                    </li>
-                </ul>
-            </nav>
+        <div class="brand">
+            <img src="images/logo.png" alt="HBnB Logo" class="logo">
         </div>
+        <nav class="nav-menu">
+            <ul>
+                <li><button id="login-button" class="button auth-button"
+                        onclick="location.href='templates/login.html'">Login</button></li>
+                <li><button id="logout-button" class="button auth-button" style="display: none;">Logout</button>
+                </li>
+            </ul>
+        </nav>
     </header>
 
     <main>
@@ -46,8 +46,12 @@
     </main>
 
     <footer>
-        <div class="container">
+        <div class="footer-details">
             <p>&copy; 2025 HBnB. All rights reserved.</p>
+            <div>
+                <a href="templates/privacy.html">Privacy Policy</a>
+                <a href="templates/terms.html">Terms & Conditions</a>
+            </div>
         </div>
     </footer>
 
