@@ -435,17 +435,22 @@ function displayPlaceDetails(place) {
         return;
     }
 
-    // Create container for both details and reviews
     placeDetails.innerHTML = `
         <div id="place-details-container">
             <div class="place-details-box">
-                <h2>${place.title || 'Untitled Place'}</h2>
-                <div class="place-info">
-                    <p><strong>Host:</strong> ${place.owner_name || 'Unknown'}</p>
-                    <p><strong>Description:</strong> ${place.description || 'No Description'}</p>
-                    <p><strong>Price:</strong> $${place.price || '0'}/night</p>
-                    <p><strong>Location:</strong> ${place.latitude || '0'}, ${place.longitude || '0'}</p>
-                    <p><strong>Amenities:</strong> ${place.amenities ? place.amenities.map(a => a.name).join(', ') : 'None'}</p>
+                <h2>${place.title || 'No Title'}</h2>
+                <div class="content-wrapper">
+                    <div class="place-info">
+                        <p><strong>Host:</strong> ${place.owner_name || 'Unknown'}</p>
+                        <p><strong>Description:</strong> ${place.description || 'No Description'}</p>
+                        <p><strong>Price:</strong> $${place.price || '0'} per night</p>
+                        <p><strong>Location:</strong> ${place.latitude || '0'}, ${place.longitude || '0'}</p>
+                        <p><strong>Amenities:</strong> ${place.amenities ? place.amenities.map(a => a.name).join(', ') : 'None'}</p>
+                    </div>
+                    <div class="place-image-container">
+                        <i class="fas fa-image"></i>
+                        <p>Image not available</p>
+                    </div>
                 </div>
             </div>
             <div class="review-form-box">
