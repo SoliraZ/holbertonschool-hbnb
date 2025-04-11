@@ -3,6 +3,11 @@
 */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Add home button to all pages except index.html
+    if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
+        addHomeButton();
+    }
+
     const loginForm = document.getElementById('auth-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
@@ -633,3 +638,15 @@ function checkTokenAndHideLogin() {
 
 // Call this function on page load
 checkTokenAndHideLogin();
+
+function addHomeButton() {
+    const homeButton = document.createElement('a');
+    homeButton.href = '../index.html';
+    homeButton.className = 'home-button';
+    homeButton.innerHTML = '<i class="fas fa-home"></i>Home';
+
+    const brandDiv = document.querySelector('.brand');
+    if (brandDiv) {
+        brandDiv.appendChild(homeButton);
+    }
+}
