@@ -535,30 +535,47 @@ footer {
 /* Review Styles */
 .review {
     background: #fff;
-    padding: 15px;
+    padding: 20px;
     margin-bottom: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 10px;
 }
 
 .user-name {
     font-weight: bold;
     color: #333;
+    font-size: 1.1em;
+    display: block;
+}
+
+.rating {
+    display: flex;
+    gap: 4px;
+    margin: 10px 0;
+}
+
+.star {
+    color: #ccc;
+    font-size: 1.2em;
+}
+
+.star.filled {
+    color: #ffd700;
 }
 
 .review-text {
     color: #666;
-    margin: 10px 0;
+    margin: 15px 0;
+    line-height: 1.4;
 }
 
 .review-date {
     font-size: 0.8em;
     color: #999;
+    display: block;
+    margin-top: 10px;
 }

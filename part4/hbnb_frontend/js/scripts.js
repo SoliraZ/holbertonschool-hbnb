@@ -413,16 +413,14 @@ function displayReviews(reviews) {
             <div class="review">
                 <div class="review-header">
                     <span class="user-name">${review.user_name || 'Anonymous'}</span>
-                    <div class="rating">
-                        ${Array(5).fill().map((_, i) =>
+                </div>
+                <div class="rating">
+                    ${Array(5).fill().map((_, i) =>
             `<span class="star ${i < review.rating ? 'filled' : ''}">★</span>`
         ).join('')}
-                    <strong>${review.user_name || 'Anonymous'}</strong>
-                    <div class="review-rating">
-                        ${generateStarRating(review.rating || 0)}
-                    </div>
                 </div>
-                <p class="review-content">${review.text || 'No review text'}</p>
+                <p class="review-text">${review.text}</p>
+                <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
             </div>
         `).join('');
     } else {
