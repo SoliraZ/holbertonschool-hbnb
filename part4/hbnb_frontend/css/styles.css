@@ -27,11 +27,23 @@ nav a {
     margin-left: 1rem;
 }
 
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 10px;
+}
+
 main {
     padding: 2rem;
 }
 
-.place-card, .review-card {
+.place-card,
+.review-card {
     margin: 20px;
     padding: 10px;
     border: 1px solid #ddd;
