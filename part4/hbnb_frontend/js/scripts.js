@@ -49,11 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkAuthentication();
 
+    // Set up price filter event listener
     const priceFilter = document.getElementById('price-filter');
     if (priceFilter) {
         priceFilter.addEventListener('change', () => {
-            const token = getCookie('token');
-            fetchPlaces(token);
+            applyPriceFilter();
         });
     }
 
@@ -254,15 +254,32 @@ function viewDetails(placeId) {
 }
 
 function applyPriceFilter() {
-    const selectedPrice = parseFloat(document.getElementById('price-filter').value);
-    const places = document.querySelectorAll('.place');
+    const selectedPrice = document.getElementById('price-filter').value;
+    const places = document.querySelectorAll('.place-card');
+
+    console.log(`Filtering places with max price: ${selectedPrice}`);
 
     places.forEach(place => {
-        const price = parseFloat(place.querySelector('p:nth-child(4)').textContent.replace(/[^0-9.-]+/g, ""));
-        if (isNaN(selectedPrice) || selectedPrice === 'all' || price <= selectedPrice) {
-            place.style.display = 'block';
-        } else {
-            place.style.display = 'none';
+        // Extract price from the text content
+        const priceText = place.querySelector('p').textContent;
+        const priceMatch = priceText.match(/\$(\d+)/);
+
+        if (priceMatch) {
+            const price = parseInt(priceMatch[1]);
+            console.log(`Place price: $${price}`);
+
+            // Show all places if "all" is selected
+            if (selectedPrice === 'all') {
+                place.style.display = 'block';
+            } else {
+                // Compare with the selected price
+                const maxPrice = parseInt(selectedPrice);
+                if (price <= maxPrice) {
+                    place.style.display = 'block';
+                } else {
+                    place.style.display = 'none';
+                }
+            }
         }
     });
 }
