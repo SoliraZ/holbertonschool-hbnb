@@ -18,11 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 email: credentials.get('email'),
                 password: credentials.get('password')
             };
-            console.log('User credentials:', userDetails);
+            // console.log('User credentials:', userDetails);
 
             try {
                 const apiUrl = '/api/v1/auth/login';
-                console.log('Sending login request to:', apiUrl);
+                // console.log('Sending login request to:', apiUrl);
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -33,10 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     credentials: 'omit'
                 });
 
-                console.log('Login response status:', response.status);
+                // console.log('Login response status:', response.status);
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('Login successful:', result);
+                    // console.log('Login successful:', result);
                     document.cookie = `token=${result.access_token}; path=/`;
                     window.location.replace('../index.html');
                 } else if (response.status === 401) {
@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Login failed: ' + response.statusText);
                 }
             } catch (err) {
-                console.error('Error during login:', err);
-                console.error('Error details:', err.message);
+                // console.error('Error during login:', err);
+                // console.error('Error details:', err.message);
                 alert('Login error: ' + err.message + '. Please check if the backend server is running.');
             }
         });
@@ -109,7 +109,7 @@ async function retrieveLocations(authToken) {
     try {
         // Use relative URL for proxy support
         const apiUrl = '/api/v1/places';
-        console.log('Fetching places from:', apiUrl);
+        // console.log('Fetching places from:', apiUrl);
 
         // Create headers object
         const headers = {
@@ -158,7 +158,7 @@ async function renderLocations(authToken) {
     let filteredLocations = locations;
     if (maxPrice && maxPrice !== 'all' && locations && Array.isArray(locations)) {
         filteredLocations = locations.filter(location => location.price <= maxPrice);
-        console.log(`Filtered ${locations.length} locations to ${filteredLocations.length} with max price $${maxPrice}`);
+        // console.log(`Filtered ${locations.length} locations to ${filteredLocations.length} with max price $${maxPrice}`);
     }
 
     if (filteredLocations && Array.isArray(filteredLocations)) {
@@ -325,12 +325,12 @@ function isTokenValid(token) {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const expiry = payload.exp * 1000; // Convert to milliseconds
-        console.log('Token Payload:', payload);
-        console.log('Token Expiry:', new Date(expiry));
-        console.log('Current Time:', new Date());
+        // console.log('Token Payload:', payload);
+        // console.log('Token Expiry:', new Date(expiry));
+        // console.log('Current Time:', new Date());
         return Date.now() < expiry;
     } catch (error) {
-        console.error('Error checking token validity:', error);
+        // console.error('Error checking token validity:', error);
         return false;
     }
 }
@@ -339,7 +339,7 @@ function applyPriceFilter() {
     const selectedPrice = document.getElementById('price-filter').value;
     const places = document.querySelectorAll('.place-card');
 
-    console.log(`Filtering places with max price: ${selectedPrice}`);
+    // console.log(`Filtering places with max price: ${selectedPrice}`);
 
     places.forEach(place => {
         // Extract price from the text content
@@ -348,7 +348,7 @@ function applyPriceFilter() {
 
         if (priceMatch) {
             const price = parseInt(priceMatch[1]);
-            console.log(`Place price: $${price}`);
+            // console.log(`Place price: $${price}`);
 
             // Show all places if "all" is selected
             if (selectedPrice === 'all') {
