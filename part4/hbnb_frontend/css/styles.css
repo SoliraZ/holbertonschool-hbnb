@@ -497,50 +497,56 @@ footer {
 
 /* Review Styles */
 .review {
-    background: #fff;
-    padding: 20px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    padding: 2rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.review-content {
+    flex: 1;
+}
+
+.review-image-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #f5f5f5;
+    border: 1px solid #eaeaea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 1.5rem;
+    flex-shrink: 0;
 }
 
 .review-header {
-    margin-bottom: 10px;
+    margin-bottom: 1rem;
 }
 
 .user-name {
-    font-weight: bold;
-    color: #333;
-    font-size: 1.1em;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
     display: block;
+    margin-bottom: 0.5rem;
 }
 
 .rating {
-    display: flex;
-    gap: 4px;
-    margin: 10px 0;
-}
-
-.star {
-    color: #ccc;
-    font-size: 1.2em;
-}
-
-.star.filled {
-    color: #ffd700;
+    margin-bottom: 1rem;
 }
 
 .review-text {
-    color: #666;
-    margin: 15px 0;
-    line-height: 1.4;
+    color: #4a4a4a;
+    line-height: 1.6;
+    margin-bottom: 1rem;
 }
 
 .review-date {
-    font-size: 0.8em;
-    color: #999;
-    display: block;
-    margin-top: 10px;
+    color: #888;
+    font-size: 0.9rem;
 }
 
 .brand {

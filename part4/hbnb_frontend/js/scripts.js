@@ -233,37 +233,48 @@ function getCookie(name) {
     return v ? v[2] : null;
 }
 
-async function fetchPlaces(token) {
-    try {
-        const apiUrl = '/api/v1/places';
-        const headers = {
-            'Content-Type': 'application/json'
-        };
+function fetchPlaces(token) {
+    // Only proceed if we're on the main page
+    if (!window.location.pathname.includes('place.html')) {
+        try {
+            const apiUrl = '/api/v1/places';
+            const headers = {
+                'Content-Type': 'application/json'
+            };
 
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: headers
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch places');
+                    }
+                    return response.json();
+                })
+                .then(places => {
+                    displayPlaces(places);
+                })
+                .catch(error => {
+                    console.error('Error fetching places:', error);
+                });
+        } catch (error) {
+            console.error('Error in fetchPlaces:', error);
         }
-
-        const response = await fetch(apiUrl, {
-            method: 'GET',
-            headers: headers
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch places');
-        }
-
-        const places = await response.json();
-        displayPlaces(places);
-    } catch (error) {
-        console.error('Error fetching places:', error);
     }
 }
 
 function displayPlaces(places) {
     const placesList = document.getElementById('location-container');
     if (!placesList) {
-        console.error('Element with ID "location-container" not found.');
+        // Only log error if we're on the main page
+        if (!window.location.pathname.includes('place.html')) {
+            console.error('Element with ID "location-container" not found.');
+        }
         return;
     }
 
@@ -414,20 +425,29 @@ function displayReviews(reviews) {
     if (!reviewsList) return;
 
     if (reviews && reviews.length > 0) {
-        reviewsList.innerHTML = reviews.map(review => `
+        reviewsList.innerHTML = reviews.map(review => {
+            // Get the first letter of the user's name for the circle
+            const userInitial = (review.user_name || 'Anonymous').charAt(0).toUpperCase();
+
+            return `
             <div class="review">
-                <div class="review-header">
-                    <span class="user-name">${review.user_name || 'Anonymous'}</span>
+                <div class="review-image-circle">
+                    ${userInitial}
                 </div>
-                <div class="rating">
-                    ${Array(5).fill().map((_, i) =>
-            `<span class="star ${i < review.rating ? 'filled' : ''}">★</span>`
-        ).join('')}
+                <div class="review-content">
+                    <div class="review-header">
+                        <span class="user-name">${review.user_name || 'Anonymous'}</span>
+                        <div class="rating">
+                            ${Array(5).fill().map((_, i) =>
+                `<span class="star ${i < review.rating ? 'filled' : ''}">★</span>`
+            ).join('')}
+                        </div>
+                    </div>
+                    <p class="review-text">${review.text}</p>
+                    <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                 </div>
-                <p class="review-text">${review.text}</p>
-                <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
             </div>
-        `).join('');
+        `}).join('');
     } else {
         reviewsList.innerHTML = '<p class="no-reviews">No reviews yet</p>';
     }
