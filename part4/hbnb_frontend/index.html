@@ -15,44 +15,32 @@
         </div>
         <nav class="nav-menu">
             <ul>
-                <li><button id="login-button" class="button auth-button"
-                        onclick="location.href='templates/login.html'">Login</button></li>
-                <li><button id="logout-button" class="button auth-button" style="display: none;">Logout</button>
-                </li>
+                <li><button id="login-button" class="button auth-button">Login</button></li>
+                <li><button id="logout-button" class="button auth-button" style="display: none;">Logout</button></li>
             </ul>
         </nav>
     </header>
 
     <main>
-        <div class="container">
-            <section>
-                <div class="section-header flex-header">
-                    <h1>Browse Available Places</h1>
-                    <div id="filter">
-                        <label for="price-filter">Max Price:</label>
-                        <select id="price-filter">
-                            <option value="10">$10</option>
-                            <option value="50">$50</option>
-                            <option value="100">$100</option>
-                            <option selected value="all">All</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="location-container">
-                    <!-- Listings will be dynamically loaded here -->
-                </div>
-            </section>
+        <div class="section-header">
+            <h1>Browse Available Places</h1>
+            <div id="filter">
+                <label for="price-filter">Max Price:</label>
+                <select id="price-filter">
+                    <option value="10">$10</option>
+                    <option value="50">$50</option>
+                    <option value="100">$100</option>
+                    <option selected value="all">All</option>
+                </select>
+            </div>
+        </div>
+        <div id="location-container">
+            <!-- Listings will be dynamically loaded here -->
         </div>
     </main>
 
     <footer>
-        <div class="footer-details">
-            <p>&copy; 2025 HBnB. All rights reserved.</p>
-            <div>
-                <a href="templates/privacy.html">Privacy Policy</a>
-                <a href="templates/terms.html">Terms & Conditions</a>
-            </div>
-        </div>
+        <p>&copy; 2025 HBnB. All rights reserved.</p>
     </footer>
 
     <script src="js/scripts.js"></script>
