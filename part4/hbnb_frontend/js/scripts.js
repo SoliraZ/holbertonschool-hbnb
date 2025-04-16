@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
         addHomeButton();
     }
 
+    // Set up login button click handler
+    const loginButton = document.getElementById('login-button');
+    if (loginButton) {
+        loginButton.addEventListener('click', () => {
+            window.location.href = 'templates/login.html';
+        });
+    }
+
     const loginForm = document.getElementById('auth-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
