@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Display places on the main page
+    if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+        if (token) {
+            displayPlaces(token);
+        }
+    }
+
     // Set up price filter event listener
     const priceFilter = document.getElementById('price-filter');
     if (priceFilter) {
@@ -91,44 +98,42 @@ document.addEventListener('DOMContentLoaded', () => {
 async function displayPlaces(token) {
     try {
         const places = await retrieveLocations(token);
-        if (places && Array.isArray(places)) {
-            const placesList = document.getElementById('location-container');
-            if (!placesList) {
-                if (!window.location.pathname.includes('place.html')) {
-                    console.error('Element with ID "location-container" not found.');
-                }
-                return;
-            }
+        const placesList = document.getElementById('location-container');
 
-            placesList.innerHTML = ''; // Clear existing content
-
-            const filteredPlaces = filterPlacesByPrice(places);
-
-            if (filteredPlaces && Array.isArray(filteredPlaces)) {
-                filteredPlaces.forEach(place => {
-                    const placeElement = document.createElement('div');
-                    placeElement.className = 'place-card';
-                    placeElement.innerHTML = `
-                        <div class="place-image-box">
-                            <i class="fas fa-image"></i>
-                            <p>Image not available</p>
-                        </div>
-                        <h2>${place.title || 'No Title'}</h2>
-                        <p>Price: $${place.price || '0'} per night</p>
-                        <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
-                    `;
-                    placesList.appendChild(placeElement);
-                });
-            } else {
-                placesList.innerHTML = "<p>No places available.</p>";
+        if (!placesList) {
+            if (!window.location.pathname.includes('place.html')) {
+                console.error('Element with ID "location-container" not found.');
             }
-        } else {
-            console.error('No places data available');
-            const locationsWrapper = document.getElementById('location-container');
-            if (locationsWrapper) {
-                locationsWrapper.innerHTML = "<p>No places available at the moment.</p>";
-            }
+            return;
         }
+
+        if (!places || !Array.isArray(places)) {
+            placesList.innerHTML = "<p>No places available at the moment.</p>";
+            return;
+        }
+
+        placesList.innerHTML = '';
+        const filteredPlaces = filterPlacesByPrice(places);
+
+        if (filteredPlaces.length === 0) {
+            placesList.innerHTML = "<p>No places available in this price range.</p>";
+            return;
+        }
+
+        filteredPlaces.forEach(place => {
+            const placeElement = document.createElement('div');
+            placeElement.className = 'place-card';
+            placeElement.innerHTML = `
+                <div class="place-image-box">
+                    <i class="fas fa-image"></i>
+                    <p>Image not available</p>
+                </div>
+                <h2>${place.title || 'No Title'}</h2>
+                <p>Price: $${place.price || '0'} per night</p>
+                <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
+            `;
+            placesList.appendChild(placeElement);
+        });
     } catch (error) {
         console.error('Error displaying places:', error);
         const locationsWrapper = document.getElementById('location-container');
@@ -140,16 +145,11 @@ async function displayPlaces(token) {
 
 async function retrieveLocations(authToken) {
     try {
-        // Use relative URL for proxy support
         const apiUrl = '/api/v1/places';
-        // console.log('Fetching places from:', apiUrl);
-
-        // Create headers object
         const headers = {
             'Content-Type': 'application/json'
         };
 
-        // Add Authorization header if token is available
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
@@ -158,54 +158,17 @@ async function retrieveLocations(authToken) {
             method: 'GET',
             headers: headers,
             mode: 'cors',
-            credentials: 'omit' // Don't send cookies
+            credentials: 'omit'
         });
 
         if (!request.ok) {
-            throw new Error('Impossible de récupérer les données: ' + request.statusText);
+            throw new Error('Failed to fetch places: ' + request.statusText);
         }
 
-        const responseData = await request.json();
-        return responseData;
+        return await request.json();
     } catch (err) {
-        console.error('Erreur lors du chargement des lieux:', err);
+        console.error('Error loading places:', err);
         return null;
-    }
-}
-
-async function renderLocations(authToken) {
-    const locationsWrapper = document.getElementById('location-container');
-    if (!locationsWrapper) {
-        console.error('Element containing places not found.');
-        return;
-    }
-    locationsWrapper.innerHTML = '';
-
-    const locations = await retrieveLocations(authToken);
-    const filteredLocations = filterPlacesByPrice(locations);
-
-    if (filteredLocations && Array.isArray(filteredLocations)) {
-        if (filteredLocations.length === 0) {
-            locationsWrapper.innerHTML = "<p>No places available in this price range.</p>";
-            return;
-        }
-
-        filteredLocations.forEach(location => {
-            const locationCard = document.createElement('div');
-            locationCard.className = 'place-card';
-            locationCard.innerHTML = `
-                <div class="place-image-box">
-                    <i class="fas fa-image"></i>
-                    <p>Image not available</p>
-                </div>
-                <h2>${location.title}</h2>
-                <p>Price: $${location.price} per night</p>
-                <button class="details-button" onclick="viewDetails('${location.id}')">View Details</button>
-            `;
-            locationsWrapper.appendChild(locationCard);
-        });
-    } else {
-        locationsWrapper.innerHTML = "<p>No places available.</p>";
     }
 }
 
@@ -224,84 +187,52 @@ function filterPlacesByPrice(places) {
     return places;
 }
 
-function displayPlaces(places) {
-    const placesList = document.getElementById('location-container');
-    if (!placesList) {
-        if (!window.location.pathname.includes('place.html')) {
-            console.error('Element with ID "location-container" not found.');
-        }
+function viewDetails(placeId) {
+    if (!checkAuthentication()) {
+        alert('Please log in to view place details.');
+        window.location.href = '../templates/login.html';
         return;
     }
-
-    placesList.innerHTML = ''; // Clear existing content
-
-    const filteredPlaces = filterPlacesByPrice(places);
-
-    filteredPlaces.forEach(place => {
-        const placeElement = document.createElement('div');
-        placeElement.className = 'place-card';
-        placeElement.innerHTML = `
-            <div class="place-image-box">
-                <i class="fas fa-image"></i>
-                <p>Image not available</p>
-            </div>
-            <h2>${place.title || 'No Title'}</h2>
-            <p>Price: $${place.price || '0'} per night</p>
-            <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
-        `;
-        placesList.appendChild(placeElement);
-    });
+    window.location.href = `templates/place.html?placeId=${placeId}`;
 }
 
 /* CheckAuth */
 
-function checkAuthentication() {
-    const token = getCookie('token');
-    const loginLink = document.getElementById('login-link');
-    const logoutButton = document.getElementById('logout-button');
-    const addReviewSection = document.getElementById('add-review');
-
-    if (!token) {
-        if (loginLink) loginLink.style.display = 'block';
-        if (logoutButton) logoutButton.style.display = 'none'; // Hide logout button
-        if (addReviewSection) addReviewSection.style.display = 'none';
-        return null;
-    } else {
-        // Check if token is expired
-        if (!isTokenValid(token)) {
-            // Clear the expired token
-            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-
-            if (loginLink) loginLink.style.display = 'block';
-            if (logoutButton) logoutButton.style.display = 'none';
-            if (addReviewSection) addReviewSection.style.display = 'none';
-
-            // If we're on a page that requires authentication, show alert and redirect
-            if (window.location.pathname.includes('place.html')) {
-                alert('Session expired. Please log in again.');
-                window.location.href = '../templates/login.html';
-            }
-            return null;
-        }
-
-        if (loginLink) loginLink.style.display = 'none';
-        if (logoutButton) {
-            logoutButton.style.display = 'block';
-            logoutButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                window.location.replace('../index.html');
-            });
-        }
-        if (addReviewSection) addReviewSection.style.display = 'block';
-        fetchPlaces(token);
-        return token;
-    }
-}
-
 function getCookie(name) {
     const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
     return v ? v[2] : null;
+}
+
+function isTokenValid(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expiry = payload.exp * 1000;
+        return Date.now() < expiry;
+    } catch (error) {
+        return false;
+    }
+}
+
+function checkAuthentication() {
+    const token = getCookie('token');
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+
+    if (!token || !isTokenValid(token)) {
+        if (loginButton) loginButton.style.display = 'block';
+        if (logoutButton) logoutButton.style.display = 'none';
+        return null;
+    }
+
+    if (loginButton) loginButton.style.display = 'none';
+    if (logoutButton) {
+        logoutButton.style.display = 'block';
+        logoutButton.addEventListener('click', () => {
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            window.location.replace('../index.html');
+        });
+    }
+    return token;
 }
 
 function fetchPlaces(token) {
@@ -339,74 +270,6 @@ function fetchPlaces(token) {
     }
 }
 
-function viewDetails(placeId) {
-    if (!checkAndHandleTokenExpiry()) {
-        return; // Stop execution if token is expired
-    }
-    window.location.href = `templates/place.html?placeId=${placeId}`;
-}
-
-function checkAndHandleTokenExpiry() {
-    const token = getCookie('token');
-    if (!token || !isTokenValid(token)) {
-        // Clear the token
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        // Clear any other auth-related cookies or storage
-        localStorage.clear();
-        sessionStorage.clear();
-
-        alert('Session expired. Please log in again.');
-        window.location.href = '../templates/login.html';
-        return false;
-    }
-    return true;
-}
-
-function isTokenValid(token) {
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const expiry = payload.exp * 1000; // Convert to milliseconds
-        // console.log('Token Payload:', payload);
-        // console.log('Token Expiry:', new Date(expiry));
-        // console.log('Current Time:', new Date());
-        return Date.now() < expiry;
-    } catch (error) {
-        // console.error('Error checking token validity:', error);
-        return false;
-    }
-}
-
-function applyPriceFilter() {
-    const selectedPrice = document.getElementById('price-filter').value;
-    const places = document.querySelectorAll('.place-card');
-
-    console.log(`Filtering places with max price: ${selectedPrice}`);
-
-    places.forEach(place => {
-        // Extract price from the text content
-        const priceText = place.querySelector('p').textContent;
-        const priceMatch = priceText.match(/\$(\d+)/);
-
-        if (priceMatch) {
-            const price = parseInt(priceMatch[1]);
-            console.log(`Place price: $${price}`);
-
-            // Show all places if "all" is selected
-            if (selectedPrice === 'all') {
-                place.style.display = 'block';
-            } else {
-                // Compare with the selected price
-                const maxPrice = parseInt(selectedPrice);
-                if (price <= maxPrice) {
-                    place.style.display = 'block';
-                } else {
-                    place.style.display = 'none';
-                }
-            }
-        }
-    });
-}
-
 function getPlaceIdFromURL() {
     const params = new URLSearchParams(window.location.search);
     return params.get('placeId');
@@ -426,7 +289,8 @@ async function fetchPlaceDetails(token, placeId) {
 
         if (!response.ok) {
             if (response.status === 401) {
-                checkAndHandleTokenExpiry();
+                alert('Session expired. Please log in again.');
+                window.location.href = '../templates/login.html';
                 return;
             }
             throw new Error('Failed to fetch place details');
@@ -435,7 +299,6 @@ async function fetchPlaceDetails(token, placeId) {
         const place = await response.json();
         displayPlaceDetails(place);
 
-        // Fetch reviews for this place
         try {
             const reviewsResponse = await fetch(`http://127.0.0.1:5000/api/v1/places/${placeId}/reviews`, {
                 method: 'GET',
@@ -451,12 +314,10 @@ async function fetchPlaceDetails(token, placeId) {
                 const reviews = await reviewsResponse.json();
                 displayReviews(reviews);
             } else {
-                // If reviews endpoint is not available, just show "No reviews yet"
                 displayReviews([]);
             }
         } catch (reviewsError) {
             console.error('Error fetching reviews:', reviewsError);
-            // If there's an error fetching reviews, just show "No reviews yet"
             displayReviews([]);
         }
     } catch (error) {
@@ -471,28 +332,25 @@ function displayReviews(reviews) {
 
     if (reviews && reviews.length > 0) {
         reviewsList.innerHTML = reviews.map(review => {
-            // Get the first letter of the user's name for the circle
             const userInitial = (review.user_name || 'Anonymous').charAt(0).toUpperCase();
-
             return `
-            <div class="review">
-                <div class="review-image-circle">
-                    ${userInitial}
-                </div>
-                <div class="review-content">
-                    <div class="review-header">
-                        <span class="user-name">${review.user_name || 'Anonymous'}</span>
-                        <div class="rating">
-                            ${Array(5).fill().map((_, i) =>
+                <div class="review">
+                    <div class="review-image-circle">${userInitial}</div>
+                    <div class="review-content">
+                        <div class="review-header">
+                            <span class="user-name">${review.user_name || 'Anonymous'}</span>
+                            <div class="rating">
+                                ${Array(5).fill().map((_, i) =>
                 `<span class="star ${i < review.rating ? 'filled' : ''}">★</span>`
             ).join('')}
+                            </div>
                         </div>
+                        <p class="review-text">${review.text}</p>
+                        <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                     </div>
-                    <p class="review-text">${review.text}</p>
-                    <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                 </div>
-            </div>
-        `}).join('');
+            `;
+        }).join('');
     } else {
         reviewsList.innerHTML = '<p class="no-reviews">No reviews yet</p>';
     }
@@ -555,24 +413,9 @@ function displayPlaceDetails(place) {
         </div>
     `;
 
-    // Set up event listeners for the review form
     setupReviewForm(place.id);
 }
 
-// Function to generate star rating HTML
-function generateStarRating(rating) {
-    let stars = '';
-    for (let i = 1; i <= 5; i++) {
-        if (i <= rating) {
-            stars += '<span class="star filled">★</span>';
-        } else {
-            stars += '<span class="star">★</span>';
-        }
-    }
-    return stars;
-}
-
-// Function to set up the review form event listeners
 function setupReviewForm(placeId) {
     const form = document.getElementById('review-form');
     if (!form) return;
@@ -582,11 +425,9 @@ function setupReviewForm(placeId) {
     const reviewText = document.getElementById('review-text');
     const charCount = document.getElementById('char-count');
     const submitButton = document.getElementById('submit-review');
-
-    // Get token and verify
     const token = getCookie('token');
+
     if (!token || !isTokenValid(token)) {
-        // Hide review form and show login message
         const reviewFormBox = document.querySelector('.review-form-box');
         if (reviewFormBox) {
             reviewFormBox.innerHTML = '<p>Please <a href="../templates/login.html">login</a> to write a review.</p>';
@@ -594,7 +435,6 @@ function setupReviewForm(placeId) {
         return;
     }
 
-    // Star rating functionality
     stars.forEach(star => {
         star.addEventListener('click', () => {
             const rating = parseInt(star.getAttribute('data-rating'));
@@ -610,19 +450,18 @@ function setupReviewForm(placeId) {
         });
     });
 
-    // Character count
     reviewText.addEventListener('input', () => {
         const length = reviewText.value.length;
         charCount.textContent = length;
         updateSubmitButton();
     });
 
-    // Form submission
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Verify token again before submitting
-        if (!checkAndHandleTokenExpiry()) {
+        if (!isTokenValid(token)) {
+            alert('Session expired. Please log in again.');
+            window.location.href = '../templates/login.html';
             return;
         }
 
@@ -650,31 +489,22 @@ function setupReviewForm(placeId) {
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    checkAndHandleTokenExpiry();
+                    alert('Session expired. Please log in again.');
+                    window.location.href = '../templates/login.html';
                     return;
                 }
-                // Get the error message from the response
                 const errorData = await response.json();
-                console.error('Server error response:', errorData);
                 throw new Error(errorData.message || 'Failed to post review');
             }
 
-            // Clear the form
             ratingInput.value = 0;
             reviewText.value = '';
             charCount.textContent = '0';
             stars.forEach(s => s.classList.remove('selected'));
             updateSubmitButton();
 
-            // Show success message
             alert('Review posted successfully!');
-
-            // Refresh the place details to show the new review
-            const currentToken = getCookie('token');
-            if (currentToken && isTokenValid(currentToken)) {
-                fetchPlaceDetails(currentToken, placeId);
-            }
-
+            fetchPlaceDetails(token, placeId);
         } catch (error) {
             console.error('Error posting review:', error);
             alert('Failed to post review: ' + error.message);
@@ -684,25 +514,9 @@ function setupReviewForm(placeId) {
     function updateSubmitButton() {
         const rating = parseInt(ratingInput.value);
         const text = reviewText.value.trim();
-
-        if (rating > 0 && text.length > 0) {
-            submitButton.classList.remove('disabled');
-        } else {
-            submitButton.classList.add('disabled');
-        }
+        submitButton.classList.toggle('disabled', rating === 0 || text.length === 0);
     }
 }
-
-function checkTokenAndHideLogin() {
-    const token = getCookie('token');
-    const loginButton = document.getElementById('login-button');
-    if (token && isTokenValid(token)) {
-        if (loginButton) loginButton.style.display = 'none';
-    }
-}
-
-// Call this function on page load
-checkTokenAndHideLogin();
 
 function addHomeButton() {
     const homeButton = document.createElement('a');
