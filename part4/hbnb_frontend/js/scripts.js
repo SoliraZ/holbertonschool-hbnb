@@ -66,8 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up price filter event listener
     const priceFilter = document.getElementById('price-filter');
     if (priceFilter) {
-        priceFilter.addEventListener('change', () => {
-            applyPriceFilter();
+        priceFilter.addEventListener('change', async () => {
+            const token = checkAuthentication();
+            if (token) {
+                const places = await retrieveLocations(token);
+                if (places) {
+                    displayPlaces(places);
+                }
+            }
         });
     }
 
@@ -84,12 +90,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function displayPlaces(token) {
     try {
-        const locations = await retrieveLocations(token);
-        if (locations && Array.isArray(locations)) {
-            await renderLocations(token);
+        const places = await retrieveLocations(token);
+        if (places && Array.isArray(places)) {
+            const placesList = document.getElementById('location-container');
+            if (!placesList) {
+                if (!window.location.pathname.includes('place.html')) {
+                    console.error('Element with ID "location-container" not found.');
+                }
+                return;
+            }
+
+            placesList.innerHTML = ''; // Clear existing content
+
+            const filteredPlaces = filterPlacesByPrice(places);
+
+            if (filteredPlaces && Array.isArray(filteredPlaces)) {
+                filteredPlaces.forEach(place => {
+                    const placeElement = document.createElement('div');
+                    placeElement.className = 'place-card';
+                    placeElement.innerHTML = `
+                        <div class="place-image-box">
+                            <i class="fas fa-image"></i>
+                            <p>Image not available</p>
+                        </div>
+                        <h2>${place.title || 'No Title'}</h2>
+                        <p>Price: $${place.price || '0'} per night</p>
+                        <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
+                    `;
+                    placesList.appendChild(placeElement);
+                });
+            } else {
+                placesList.innerHTML = "<p>No places available.</p>";
+            }
         } else {
-            console.error('No locations data available');
-            // Display a message to the user
+            console.error('No places data available');
             const locationsWrapper = document.getElementById('location-container');
             if (locationsWrapper) {
                 locationsWrapper.innerHTML = "<p>No places available at the moment.</p>";
@@ -97,7 +131,6 @@ async function displayPlaces(token) {
         }
     } catch (error) {
         console.error('Error displaying places:', error);
-        // Display a message to the user
         const locationsWrapper = document.getElementById('location-container');
         if (locationsWrapper) {
             locationsWrapper.innerHTML = "<p>Error loading places. Please try again later.</p>";
@@ -143,43 +176,81 @@ async function retrieveLocations(authToken) {
 async function renderLocations(authToken) {
     const locationsWrapper = document.getElementById('location-container');
     if (!locationsWrapper) {
-        console.error('Élément contenant les lieux non trouvé.');
+        console.error('Element containing places not found.');
         return;
     }
     locationsWrapper.innerHTML = '';
 
     const locations = await retrieveLocations(authToken);
-
-    // Get the selected max price from the filter
-    const priceFilter = document.getElementById('price-filter');
-    const maxPrice = priceFilter ? parseFloat(priceFilter.value) : null;
-
-    // Filter locations by price if a max price is selected
-    let filteredLocations = locations;
-    if (maxPrice && maxPrice !== 'all' && locations && Array.isArray(locations)) {
-        filteredLocations = locations.filter(location => location.price <= maxPrice);
-        // console.log(`Filtered ${locations.length} locations to ${filteredLocations.length} with max price $${maxPrice}`);
-    }
+    const filteredLocations = filterPlacesByPrice(locations);
 
     if (filteredLocations && Array.isArray(filteredLocations)) {
         if (filteredLocations.length === 0) {
-            locationsWrapper.innerHTML = "<p>Aucun hébergement disponible dans cette fourchette de prix.</p>";
+            locationsWrapper.innerHTML = "<p>No places available in this price range.</p>";
             return;
         }
 
         filteredLocations.forEach(location => {
-            const locationCard = document.createElement('form');
-            locationCard.className = 'location-card';
+            const locationCard = document.createElement('div');
+            locationCard.className = 'place-card';
             locationCard.innerHTML = `
-          <h2>${location.title}</h2>
-          <p>$${location.price} per night</p>
-          <button type='submit' class='details-button'>See More</button>
-        `;
+                <div class="place-image-box">
+                    <i class="fas fa-image"></i>
+                    <p>Image not available</p>
+                </div>
+                <h2>${location.title}</h2>
+                <p>Price: $${location.price} per night</p>
+                <button class="details-button" onclick="viewDetails('${location.id}')">View Details</button>
+            `;
             locationsWrapper.appendChild(locationCard);
         });
     } else {
-        locationsWrapper.innerHTML = "<p>Aucun hébergement disponible.</p>";
+        locationsWrapper.innerHTML = "<p>No places available.</p>";
     }
+}
+
+function filterPlacesByPrice(places) {
+    if (!places || !Array.isArray(places)) {
+        return places;
+    }
+
+    const priceFilter = document.getElementById('price-filter');
+    const maxPrice = priceFilter ? parseFloat(priceFilter.value) : null;
+
+    if (maxPrice && maxPrice !== 'all') {
+        return places.filter(place => place.price <= maxPrice);
+    }
+
+    return places;
+}
+
+function displayPlaces(places) {
+    const placesList = document.getElementById('location-container');
+    if (!placesList) {
+        if (!window.location.pathname.includes('place.html')) {
+            console.error('Element with ID "location-container" not found.');
+        }
+        return;
+    }
+
+    placesList.innerHTML = ''; // Clear existing content
+
+    const filteredPlaces = filterPlacesByPrice(places);
+
+    filteredPlaces.forEach(place => {
+        const placeElement = document.createElement('div');
+        placeElement.className = 'place-card';
+        placeElement.innerHTML = `
+            <div class="place-image-box">
+                <i class="fas fa-image"></i>
+                <p>Image not available</p>
+            </div>
+            <h2>${place.title || 'No Title'}</h2>
+            <p>Price: $${place.price || '0'} per night</p>
+            <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
+        `;
+        placesList.appendChild(placeElement);
+    });
 }
 
 /* CheckAuth */
@@ -268,36 +339,6 @@ function fetchPlaces(token) {
     }
 }
 
-function displayPlaces(places) {
-    const placesList = document.getElementById('location-container');
-    if (!placesList) {
-        // Only log error if we're on the main page
-        if (!window.location.pathname.includes('place.html')) {
-            console.error('Element with ID "location-container" not found.');
-        }
-        return;
-    }
-
-    placesList.innerHTML = ''; // Clear existing content
-
-    places.forEach(place => {
-        const placeElement = document.createElement('div');
-        placeElement.className = 'place-card';
-        placeElement.innerHTML = `
-            <div class="place-image-box">
-                <i class="fas fa-image"></i>
-                <p>Image not available</p>
-            </div>
-            <h2>${place.title || 'No Title'}</h2>
-            <p>Price: $${place.price || '0'} per night</p>
-            <button class="details-button" onclick="viewDetails('${place.id}')">View Details</button>
-        `;
-        placesList.appendChild(placeElement);
-    });
-
-    applyPriceFilter();
-}
-
 function viewDetails(placeId) {
     if (!checkAndHandleTokenExpiry()) {
         return; // Stop execution if token is expired
@@ -339,7 +380,7 @@ function applyPriceFilter() {
     const selectedPrice = document.getElementById('price-filter').value;
     const places = document.querySelectorAll('.place-card');
 
-    // console.log(`Filtering places with max price: ${selectedPrice}`);
+    console.log(`Filtering places with max price: ${selectedPrice}`);
 
     places.forEach(place => {
         // Extract price from the text content
@@ -348,7 +389,7 @@ function applyPriceFilter() {
 
         if (priceMatch) {
             const price = parseInt(priceMatch[1]);
-            // console.log(`Place price: $${price}`);
+            console.log(`Place price: $${price}`);
 
             // Show all places if "all" is selected
             if (selectedPrice === 'all') {
